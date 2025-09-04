@@ -34,7 +34,7 @@ Generated anime faces after training (FID ≈ **23.9**):
 
 ## Project Structure 
 ``` 
-WGAN-AnimeFaces/
+GAN-Project/
 │
 ├── README.md
 ├── requirements.txt
