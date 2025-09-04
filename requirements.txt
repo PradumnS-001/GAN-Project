@@ -1,0 +1,13 @@
+torch>=2.0.0
+torchvision>=0.15.0
+torchmetrics>=0.11.0
+torch-fidelity>=0.3.0
+torchview>=0.2.0
+numpy>=1.23.0
+matplotlib>=3.7.0
+pillow>=9.0.0
+kagglehub>=0.2.0
+ipython>=8.0.0
+streamlit>=1.25.0
+jupyter
+pillow
