@@ -2,7 +2,9 @@ import numpy as np
 import sys
 import torch
 from torch import nn
+import streamlit as st
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+import gc
 
 latent_dim = 100
 
@@ -222,36 +224,54 @@ class Discriminator(nn.Module):
 generator_path = 'models/generator31.pth'
 filter_path = 'models/filter.pth'
 
-# Register alias so torch.load finds it
-sys.modules['__main__'].Generator = Generator
-sys.modules['__main__'].Discriminator = Discriminator
-sys.modules['__main__'].PixelNorm = PixelNorm
-sys.modules['__main__'].Block = Block
-sys.modules['__main__'].UpBlockOne = UpBlockOne
-sys.modules['__main__'].UpBlockTwo = UpBlockTwo
+# Clearing cache done to prevent server overloading
+@st.cache_resource
+def load_models():
+    # Register alias so torch.load finds it
+    sys.modules['__main__'].Generator = Generator
+    sys.modules['__main__'].Discriminator = Discriminator
+    sys.modules['__main__'].PixelNorm = PixelNorm
+    sys.modules['__main__'].Block = Block
+    sys.modules['__main__'].UpBlockOne = UpBlockOne
+    sys.modules['__main__'].UpBlockTwo = UpBlockTwo
 
-# Actual models
-generator = torch.load(generator_path, map_location=device, weights_only=False).to(device)
-filter = torch.load(filter_path, map_location=device, weights_only=False).to(device)
+    # Actual models
+    generator = torch.load(generator_path, map_location=device, weights_only=False).to(device)
+    filter = torch.load(filter_path, map_location=device, weights_only=False).to(device)
+    # Setting them to eval
+    generator.eval()
+    filter.eval()
+    return filter, generator
 
-generator.eval()
-filter.eval()
+# To 
+with torch.no_grad():
+    def generate():
+        # Applying filter
+        filter, generator = load_models()
+        temp = -100
+        temp_img = generator(rand_noise())  # done to prevent NoneType error
+        for _ in range(16):
+            img = generator(rand_noise())
+            sc = filter(img).item()
+            if temp < sc:
+                # Clearing memory to prevent crash due to oevrload
+                del temp_img
+                torch.cuda.empty_cache()
+                gc.collect()
+                temp = sc
+                temp_img = img.clone()
+            # Clearing the generated image
+            del img
+            torch.cuda.empty_cache()
+            gc.collect()
 
-def generate():
-    temp = -100
-    temp_img = generator(rand_noise())  # done to prevent NoneType error
-    for _ in range(16):
-        img = generator(rand_noise())
-        sc = filter(img).item()
-        if temp < sc:
-            temp = sc
-            temp_img = img
+        arr = temp_img.squeeze(0).permute(1, 2, 0).cpu().detach().numpy()
+        # Further clearing memory
+        del temp_img
+        torch.cuda.empty_cache()
+        gc.collect()
 
-    arr = temp_img.squeeze(0).permute(1, 2, 0).cpu().detach().numpy()
-
-    # If generator outputs [-1,1] from tanh, rescale → [0,1]
-    arr = (arr + 1) / 2 if arr.min() < 0 else arr  
-
-    arr = np.clip(arr * 255, 0, 255).astype(np.uint8)
-
-    return arr
+        # Generator outputs [-1,1] from tanh, rescale → [0,255]
+        arr = (arr + 1) / 2 if arr.min() < 0 else arr  
+        arr = np.clip(arr * 255, 0, 255).astype(np.uint8)
+        return arr
