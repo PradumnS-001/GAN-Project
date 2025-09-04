@@ -18,7 +18,7 @@ I developed the project **end-to-end**:
 - Added **evaluation pipeline** with FID scoring  
 - Deployed a **Streamlit app** for real-time face generation  
 
-**Try it yourself here:** [Live](https://your-demo-link.com)  
+**Try it yourself here:** [Live]([https://your-demo-link.com](https://pradumns-001-gan-project-app-covwvj.streamlit.app/))  
 
 ---
 
