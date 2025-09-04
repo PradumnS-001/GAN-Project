@@ -28,6 +28,9 @@ Generated anime faces after training (FID ≈ **23.9**):
 
 <p align="center">
   <img src="results/generated (3).png" width="100"/>
+  <img src="results/generated (2).png" width="100"/>
+  <img src="results/generated (1).png" width="100"/>
+  <img src="results/generated.png" width="100"/>
 </p>  
 
 ---
